@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAREXO · Cockpit Achat véhicules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14202b;--slate:#5a6b78;--slate-2:#8a99a4;--field:#eef1f3;--surface:#fff;--line:#dde3e7;
+  --acier:#1f5673;--acier-d:#164257;--brass:#b5761b;--go:#2e7d4f;--warn:#c98a1e;--stop:#c0463b;
+  --go-soft:#e7f2ec;--warn-soft:#fbf1dd;--stop-soft:#f7e6e4;--acier-soft:#e6eef2;
+  --radius:10px;--shadow:0 1px 2px rgba(20,32,43,.06),0 8px 24px rgba(20,32,43,.06);
+  --mono:"IBM Plex Mono",ui-monospace,monospace;--sans:"IBM Plex Sans",system-ui,sans-serif;--display:"Space Grotesk",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--field);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);margin:0;font-weight:600;letter-spacing:-.01em}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:14px}
+
+.topbar{background:var(--ink);color:#fff;position:sticky;top:0;z-index:20;border-bottom:2px solid var(--brass)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:38px;height:38px;border-radius:8px;background:var(--brass);display:grid;place-items:center;font-family:var(--display);font-weight:700;color:var(--ink);font-size:19px;flex:none}
+.brand h1{font-size:18px;color:#fff;line-height:1.1}
+.brand .sub{font-size:11.5px;color:#9fb0bc;font-family:var(--mono);letter-spacing:.02em;text-transform:uppercase}
+.nav{display:flex;gap:4px;margin-left:auto;background:rgba(255,255,255,.06);padding:4px;border-radius:9px}
+.nav button{border:0;background:transparent;color:#c3d0d9;padding:7px 15px;border-radius:6px;font-size:13.5px;font-weight:500}
+.nav button.on{background:var(--brass);color:var(--ink);font-weight:600}
+
+.wrap{max-width:1180px;margin:0 auto;padding:22px}
+.view{display:none}
+.view.on{display:block}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-h h2{font-size:15px}
+.card-h .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--slate-2)}
+.card-b{padding:18px}
+
+.field{margin-bottom:13px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:5px}
+.hint{font-weight:400;color:var(--slate-2);font-size:11px}
+input[type=text],input[type=number],input[type=url],input[type=password],select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);transition:border-color .12s,background .12s}
+input:focus,select:focus{outline:none;border-color:var(--acier);background:#fff;box-shadow:0 0 0 3px var(--acier-soft)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.divider{height:1px;background:var(--line);margin:16px 0}
+.mini{font-size:11px;color:var(--slate-2);margin-top:4px}
+.btn{width:100%;border:0;background:var(--acier);color:#fff;padding:12px;border-radius:9px;font-size:14.5px;font-weight:600;transition:background .12s}
+.btn:hover{background:var(--acier-d)}
+.btn:active{transform:translateY(1px)}
+.btn-ghost{background:transparent;color:var(--acier);border:1px solid var(--line);font-weight:600;padding:9px 14px;border-radius:8px;width:auto;font-size:13px}
+.btn-ghost:hover{background:var(--acier-soft)}
+.btn-sm{padding:7px 12px;font-size:12.5px;border-radius:7px;width:auto}
+
+.empty{padding:44px 26px;text-align:center;color:var(--slate)}
+.empty .big{font-family:var(--display);font-size:19px;color:var(--ink);margin-bottom:8px}
+.empty svg{margin-bottom:14px;opacity:.5}
+
+.verdict-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.veh-title{font-family:var(--display);font-size:20px;font-weight:600}
+.veh-meta{font-family:var(--mono);font-size:12.5px;color:var(--slate);margin-top:3px}
+.badge{padding:8px 15px;border-radius:999px;font-weight:600;font-size:14px;font-family:var(--display);white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.badge .dot{width:9px;height:9px;border-radius:50%}
+.badge.go{background:var(--go-soft);color:var(--go)}.badge.go .dot{background:var(--go)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}.badge.warn .dot{background:var(--warn)}
+.badge.stop{background:var(--stop-soft);color:var(--stop)}.badge.stop .dot{background:var(--stop)}
+.badge.neutral{background:var(--acier-soft);color:var(--acier)}.badge.neutral .dot{background:var(--acier)}
+
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 6px}
+.kpi{background:var(--field);border:1px solid var(--line);border-radius:9px;padding:14px}
+.kpi .k-lab{font-size:11px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;font-family:var(--mono)}
+.kpi .k-val{font-family:var(--mono);font-size:26px;font-weight:600;margin-top:6px;letter-spacing:-.02em}
+.kpi .k-sub{font-size:11.5px;color:var(--slate-2);margin-top:3px}
+.kpi.target{background:var(--ink);border-color:var(--ink)}
+.kpi.target .k-lab{color:#9fb0bc}.kpi.target .k-val{color:#fff}.kpi.target .k-sub{color:#9fb0bc}
+
+.band-wrap{margin:20px 0 4px}
+.band-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--slate);margin-bottom:12px;font-family:var(--mono)}
+.band-legend span{display:inline-flex;align-items:center;gap:6px}
+.lg-swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+.band{position:relative;height:118px;margin:0 6px}
+.band .track{position:absolute;left:0;right:0;top:78px;height:2px;background:var(--line)}
+.band .rng{position:absolute;height:22px;border-radius:5px;top:67px;opacity:.9}
+.band .rng.mine{background:rgba(31,86,115,.22);border:1px solid var(--acier);top:44px;height:20px}
+.band .rng.stk{background:rgba(46,125,79,.16);border:1px solid var(--go);top:67px;height:20px}
+.band .rng.mkt{background:rgba(181,118,27,.16);border:1px solid var(--brass);top:90px;height:20px}
+.band .tick{position:absolute;top:67px;width:2px;height:24px;background:var(--slate)}
+.band .marker{position:absolute;top:34px;transform:translateX(-50%);text-align:center}
+.band .marker .stem{width:2px;height:56px;margin:0 auto;background:var(--ink)}
+.band .marker .flag{font-family:var(--mono);font-size:11px;font-weight:600;background:var(--ink);color:#fff;padding:3px 7px;border-radius:5px;white-space:nowrap;margin-bottom:2px}
+.band .marker.prop .flag{background:var(--acier)}
+.band .marker.prop.go .flag{background:var(--go)}.band .marker.prop.warn .flag{background:var(--warn)}.band .marker.prop.stop .flag{background:var(--stop)}
+.band .marker.prop .stem{background:currentColor}
+.band .axis{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--slate-2)}
+
+.stockbox{margin-top:18px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stockbox .sb-h{background:var(--field);padding:11px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sb-h .sb-t{font-family:var(--display);font-weight:600;font-size:14px}
+.sb-h .sb-alert{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.sb-alert.ok{background:var(--go-soft);color:var(--go)}
+.sb-alert.care{background:var(--warn-soft);color:var(--warn)}
+.sb-stats{display:flex;gap:22px;flex-wrap:wrap;padding:12px 15px;font-size:13px;border-bottom:1px solid var(--field)}
+.sb-stats b{font-family:var(--mono);font-size:15px}
+
+.src-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.src-tab{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:500;color:var(--slate);display:inline-flex;align-items:center;gap:7px}
+.src-tab.on{background:var(--acier);color:#fff;border-color:var(--acier)}
+.src-tab .n{font-family:var(--mono);font-weight:600;background:rgba(0,0,0,.08);padding:1px 6px;border-radius:6px;font-size:11px}
+.src-tab.on .n{background:rgba(255,255,255,.2)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--slate-2);font-family:var(--mono);padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600}
+td{padding:9px 10px;border-bottom:1px solid var(--field)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.sim{display:inline-block;min-width:42px;text-align:center;font-family:var(--mono);font-size:11.5px;font-weight:600;padding:2px 6px;border-radius:6px;background:var(--acier-soft);color:var(--acier)}
+.sim.hi{background:var(--go-soft);color:var(--go)}
+.pill{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--field);color:var(--slate)}
+.pill.vn{background:#e6eef2;color:var(--acier)}
+.pill.vo{background:var(--warn-soft);color:var(--warn)}
+.tbl-scroll{max-height:340px;overflow:auto}
+.empty-src{padding:26px;text-align:center;color:var(--slate-2);font-size:13.5px}
+
+.data-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.data-tabs button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 15px;font-size:13.5px;font-weight:500;color:var(--slate);display:inline-flex;align-items:center;gap:8px}
+.data-tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.data-tabs button .cnt{font-family:var(--mono);font-size:11px;background:var(--field);color:var(--slate);padding:1px 7px;border-radius:6px}
+.data-tabs button.on .cnt{background:rgba(255,255,255,.15);color:#fff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .spacer{flex:1}
+.status-pill{font-family:var(--mono);font-size:11.5px;color:var(--go);background:var(--go-soft);padding:4px 10px;border-radius:6px}
+.status-pill.off{color:var(--slate-2);background:var(--field)}
+.addrow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;background:var(--field);border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:14px}
+.addrow input,.addrow select{background:#fff}
+.addrow .full{grid-column:1/-1}
+.del-x{border:0;background:transparent;color:var(--stop);font-weight:600;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:5px}
+.del-x:hover{background:var(--stop-soft)}
+.note{background:var(--acier-soft);border:1px solid #cadbe4;border-radius:9px;padding:13px 15px;font-size:13px;color:var(--acier-d);margin-bottom:16px;line-height:1.5}
+.note.warn{background:var(--warn-soft);border-color:#e9d9b3;color:#7a5a12}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:9px;font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.22s;z-index:60}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.foot{max-width:1180px;margin:8px auto 30px;padding:0 22px;font-size:11.5px;color:var(--slate-2);font-family:var(--mono)}
+
+/* Sources view */
+.src-card{margin-bottom:14px;border:1px solid var(--line);border-radius:10px;padding:15px;background:var(--surface)}
+.src-card .sc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+.src-card .sc-name{font-family:var(--display);font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:9px}
+.dot-src{width:9px;height:9px;border-radius:50%;background:var(--slate-2)}
+.dot-src.loaded{background:var(--go)}
+.dot-src.err{background:var(--stop)}
+.sc-count{font-family:var(--mono);font-size:12px;color:var(--slate)}
+.sc-desc{font-size:12px;color:var(--slate-2);margin-bottom:8px}
+.sc-err{font-size:12px;color:var(--stop);margin-top:8px;font-weight:500;line-height:1.4}
+
+/* Lock */
+.lock{position:fixed;inset:0;background:var(--ink);z-index:100;display:grid;place-items:center;padding:20px}
+.lock-box{background:var(--surface);border-radius:14px;padding:34px 30px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.lock-box .mark{margin:0 auto 16px}
+.lock-box h2{font-size:20px;margin-bottom:6px}
+.lock-box p{color:var(--slate);font-size:13px;margin:0 0 18px}
+.lock-box input{text-align:center;margin-bottom:12px}
+.lock-err{color:var(--stop);font-size:12.5px;min-height:18px;margin-top:8px;font-weight:600}
+
+@media(max-width:900px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.addrow{grid-template-columns:1fr 1fr}.nav{margin-left:0;width:100%}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- ===== Verrouillage ===== -->
+<div class="lock" id="lock">
+  <div class="lock-box">
+    <div class="mark">CX</div>
+    <h2>Cockpit Achat</h2>
+    <p>Accès réservé — Groupe CAREXO</p>
+    <input type="password" id="lock-input" placeholder="Mot de passe" autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <button class="btn" onclick="tryUnlock()">Déverrouiller</button>
+    <div class="lock-err" id="lock-err"></div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="mark">CX</div>
+      <div><h1>Cockpit Achat</h1><div class="sub">Groupe CAREXO · aide à la décision</div></div>
+    </div>
+    <nav class="nav">
+      <button id="tab-estimer" class="on" onclick="showView('estimer')">Estimer</button>
+      <button id="tab-sources" onclick="showView('sources')">Sources</button>
+      <button id="tab-donnees" onclick="showView('donnees')">Données</button>
+    </nav>
+  </div>
+</div>
+
+<!-- ===== ESTIMER ===== -->
+<div id="view-estimer" class="view on"><div class="wrap"><div class="grid">
+  <div class="card">
+    <div class="card-h"><h2>Véhicule à évaluer</h2><span class="eyebrow">saisie</span></div>
+    <div class="card-b">
+      <div class="field"><label>Marque</label><input type="text" id="in-marque" list="dl-marque" placeholder="Ex : Peugeot" autocomplete="off"><datalist id="dl-marque"></datalist></div>
+      <div class="field"><label>Modèle</label><input type="text" id="in-modele" list="dl-modele" placeholder="Ex : Partner" autocomplete="off"><datalist id="dl-modele"></datalist></div>
+      <div class="field"><label>Gamme <span class="hint">(segment)</span></label>
+        <select id="in-gamme"><option value="">—</option><option>Citadine</option><option>Berline / Compacte</option><option>Break</option><option>SUV / Crossover</option><option>Monospace</option><option>Utilitaire léger</option><option>Fourgon</option><option>Benne</option><option>Pick-up</option><option>Autre</option></select>
+      </div>
+      <div class="field"><label>Version / finition <span class="hint">(optionnel)</span></label><input type="text" id="in-version" placeholder="Ex : 1.5 BlueHDi 100 Premium" autocomplete="off"></div>
+      <div class="row3">
+        <div class="field"><label>Année</label><input type="number" id="in-annee" placeholder="2021" min="1990" max="2030"></div>
+        <div class="field"><label>Km</label><input type="number" id="in-km" placeholder="82000" min="0" step="1000"></div>
+        <div class="field"><label>Énergie</label><select id="in-carburant"><option value="">—</option><option>Diesel</option><option>Essence</option><option>Hybride</option><option>Électrique</option><option>GPL</option></select></div>
+      </div>
+      <button class="btn" onclick="analyser()">Comparer les prix</button>
+    </div>
+  </div>
+  <div class="card" id="results-card">
+    <div class="card-h"><h2>Analyse</h2><span class="eyebrow" id="res-eyebrow">en attente</span></div>
+    <div class="card-b" id="results-body">
+      <div class="empty">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <div class="big">Renseigne un véhicule pour comparer les prix</div>
+        <div>Le cockpit affiche le prix de vente sur ton stock actuel, sur ce que tu as vendu et chez tes concurrents, pour un véhicule similaire.</div>
+      </div>
+    </div>
+  </div>
+</div></div></div>
+
+<!-- ===== SOURCES ===== -->
+<div id="view-sources" class="view"><div class="wrap">
+  <div class="note"><b>Brancher tes données Google Sheets.</b> Colle l'URL CSV publiée de chaque feuille, puis « Charger ». Les données sont lues à chaque ouverture et mises en cache dans ce navigateur. Pour publier : dans Google Sheets → Fichier → Partager → Publier sur le web → choisir l'onglet et le format CSV.</div>
+  <div class="note warn"><b>Si une feuille ne se charge pas :</b> un simple lien « edit » ou une feuille privée ne peuvent pas être lus par le navigateur. Deux solutions au choix, dans Google Sheets :<br>
+  1. <b>Publier :</b> Fichier → Partager → <b>Publier sur le web</b> → choisis l'onglet + format <b>CSV</b> → Publier, puis colle l'URL obtenue.<br>
+  2. <b>Partager :</b> bouton Partager → Accès général → <b>Tous ceux qui ont le lien → Lecteur</b> ; tu peux alors coller le lien « edit » directement (l'outil le convertit).<br>
+  <b>Prix d'achat :</b> tes feuilles VN/VO contiennent des prix d'achat. Publie/partage plutôt un onglet « Vue Cockpit » sans ces colonnes, ou passe par n8n pour les garder privés.</div>
+
+  <div id="src-cards"></div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+    <button class="btn-ghost" onclick="loadAllSources()">Charger les données</button>
+    <button class="btn-ghost btn-sm" onclick="saveSources()">Enregistrer les URL</button>
+    <span class="status-pill off" id="src-status">Aucun chargement</span>
+  </div>
+</div></div>
+
+<!-- ===== DONNÉES ===== -->
+<div id="view-donnees" class="view"><div class="wrap">
+  <div class="note" id="data-note"></div>
+  <div class="data-tabs" id="data-tabs"></div>
+  <div class="card">
+    <div class="card-h"><h2 id="dt-title"></h2><span class="eyebrow" id="dt-eyebrow"></span></div>
+    <div class="card-b">
+      <div class="toolbar">
+        <button class="btn-ghost btn-sm" onclick="triggerImport()">Importer un CSV</button>
+        <button class="btn-ghost btn-sm" onclick="exportCSV()">Exporter CSV</button>
+        <button class="btn-ghost btn-sm" onclick="backupJSON()">Sauvegarder (.json)</button>
+        <button class="btn-ghost btn-sm" onclick="triggerRestore()">Restaurer (.json)</button>
+        <span class="spacer"></span>
+        <span class="status-pill off" id="save-status">—</span>
+        <button class="btn-ghost btn-sm" onclick="clearCurrent()" style="color:var(--stop);border-color:#e6c3bf">Vider</button>
+      </div>
+      <input type="file" id="file-input" accept=".csv,text/csv" style="display:none" onchange="handleFile(event)">
+      <input type="file" id="json-input" accept=".json,application/json" style="display:none" onchange="handleRestore(event)">
+      <div class="addrow" id="addrow"></div>
+      <div class="tbl-scroll"><table id="data-table"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn-ghost btn-sm" onclick="resetDemo()">Recharger les données démo</button>
+    <button class="btn-ghost btn-sm" onclick="wipeAll()" style="color:var(--stop);border-color:#e6c3bf">Tout effacer</button>
+  </div>
+</div></div>
+
+<div class="foot">Cockpit Achat v2 · aide à la décision — estimations indicatives, décision finale à toi.</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const LOCK_HASH="8fd26254aba2152c0b9ef750e8e801b10cb00d32d7df7ec0739ac5a4ae61c252";
+const LS_KEY="carexo_cockpit_v2";
+let storageOK=true, unlocked=false;
+
+/* ---------- Datasets ---------- */
+const DATASETS={
+  vendus:{label:"Véhicules vendus", eyebrow:"prix de vente réalisés", fields:["marque","modele","gamme","version","annee","km","carburant","prix","date","entite"]},
+  concurrent:{label:"Stock concurrent", eyebrow:"prix affichés (scrapés/importés)", fields:["marque","modele","gamme","version","annee","km","carburant","prix","source","date"]},
+  stock:{label:"Stock actuel", eyebrow:"VN + VO en stock", fields:["type","marque","modele","gamme","version","annee","km","carburant","prix","prix_achat","jours","statut","site"]},
+  offres:{label:"Offres reçues", eyebrow:"offres non conclues", fields:["marque","modele","gamme","version","annee","km","carburant","prix","fournisseur","raison"]},
+};
+const FIELD_LABELS={marque:"Marque",modele:"Modèle",gamme:"Gamme",version:"Version",annee:"Année",km:"Km",carburant:"Énergie",prix:"Prix",prix_achat:"Prix achat",jours:"Jrs stock",statut:"Statut",site:"Site",type:"Type",date:"Date",entite:"Entité",source:"Source",fournisseur:"Fournisseur",raison:"Raison"};
+const GAMMES=["Citadine","Berline / Compacte","Break","SUV / Crossover","Monospace","Utilitaire léger","Fourgon","Benne","Pick-up","Autre"];
+
+let DB={vendus:[],concurrent:[],stock:[],offres:[]};
+let SRC={vendus:"",concurrent:"",stockVN:"",stockVO:""};
+const SRC_META={
+  vendus:{name:"Véhicules vendus",target:"vendus",desc:"Feuille de tes ventes réalisées (le modèle CAREXO_Modele_Ventes)."},
+  concurrent:{name:"Stock concurrent",target:"concurrent",desc:"Feuille alimentée par le scraping n8n (label-auto, utilitaire-service)."},
+  stockVN:{name:"Stock actuel — VN",target:"stock",desc:"IMPORT STOCK VN (véhicules neufs)."},
+  stockVO:{name:"Stock actuel — VO",target:"stock",desc:"IMPORT STOCK VO (occasions)."},
+};
+let currentTable="vendus", currentSource="vendus", lastAnalysis=null, lastLoad=null;
+
+/* ---------- Persistance (localStorage) ---------- */
+function persist(){
+  if(!storageOK) return;
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({DB,SRC,lastLoad}));
+    const el=document.getElementById("save-status");
+    if(el){ el.textContent="Enregistré "+hhmm(); el.classList.remove("off"); }
+  }catch(e){ storageOK=false; const el=document.getElementById("save-status"); if(el){el.textContent="Mémoire indisponible";el.classList.add("off");} }
+}
+function loadDB(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){ const p=JSON.parse(raw);
+      if(p.DB) for(const k of Object.keys(DB)) if(Array.isArray(p.DB[k])) DB[k]=p.DB[k];
+      if(p.SRC) SRC={...SRC,...p.SRC};
+      lastLoad=p.lastLoad||null;
+      return;
+    }
+  }catch(e){ storageOK=false; }
+  seedDemo(); persist();
+}
+
+/* ---------- Helpers ---------- */
+const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+const toNum=v=>{if(v==null)return null;const s=v.toString().replace(/[^\d,.-]/g,"").replace(/\s/g,"").replace(",",".");const n=parseFloat(s);return isNaN(n)?null:n;};
+const pos0=n=>n!=null&&!isNaN(n)&&n>0?n:null;
+const fmtE=n=>n==null||isNaN(n)?"—":Math.round(n).toLocaleString("fr-FR")+" €";
+const fmtKm=n=>n==null||isNaN(n)?"—":Math.round(n).toLocaleString("fr-FR")+" km";
+const median=a=>{if(!a.length)return null;const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+const quantile=(a,q)=>{if(!a.length)return null;const s=[...a].sort((x,y)=>x-y);const p=(s.length-1)*q;const b=Math.floor(p),r=p-b;return s[b+1]!==undefined?s[b]+r*(s[b+1]-s[b]):s[b];};
+function tokens(s){return new Set(norm(s).split(" ").filter(Boolean));}
+function jaccard(a,b){const A=tokens(a),B=tokens(b);if(!A.size&&!B.size)return 1;if(!A.size||!B.size)return 0;let i=0;A.forEach(x=>{if(B.has(x))i++;});return i/(A.size+B.size-i);}
+function hhmm(){const d=new Date();return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);}
+function val(id){return document.getElementById(id).value.trim();}
+function esc(s){return(s??"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---------- Matching ---------- */
+function score(t,r){
+  if(norm(t.marque)!==norm(r.marque)) return 0;
+  let s=0.30;
+  if(norm(t.modele)&&norm(r.modele)){ s+= norm(t.modele)===norm(r.modele)?0.30:0.30*jaccard(t.modele,r.modele); } else s+=0.12;
+  if(t.version&&r.version) s+=0.12*jaccard(t.version,r.version);
+  const ta=toNum(t.annee),ra=toNum(r.annee);
+  if(ta&&ra) s+=0.14*Math.max(0,1-Math.abs(ta-ra)/5); else s+=0.05;
+  const tk=toNum(t.km),rk=toNum(r.km);
+  if(tk!=null&&rk!=null) s+=0.14*Math.max(0,1-Math.abs(tk-rk)/60000); else s+=0.05;
+  if(t.carburant&&r.carburant&&norm(t.carburant)===norm(r.carburant)) s+=0.03;
+  if(t.gamme&&r.gamme&&norm(t.gamme)===norm(r.gamme)) s+=0.04;
+  return Math.min(1,s);
+}
+function comparables(t,list,thr=0.55){ return list.map(r=>({r,s:score(t,r)})).filter(x=>x.s>=thr).sort((a,b)=>b.s-a.s); }
+
+/* ---------- Analyse ---------- */
+function analyser(){
+  const t={marque:val("in-marque"),modele:val("in-modele"),gamme:val("in-gamme"),version:val("in-version"),annee:val("in-annee"),km:val("in-km"),carburant:val("in-carburant")};
+  if(!t.marque||!t.modele){ toast("Renseigne au moins la marque et le modèle."); return; }
+  const cmp={vendus:comparables(t,DB.vendus),concurrent:comparables(t,DB.concurrent),stock:comparables(t,DB.stock),offres:comparables(t,DB.offres)};
+  const pV=cmp.vendus.map(x=>pos0(toNum(x.r.prix))).filter(Boolean);
+  const pS=cmp.stock.map(x=>pos0(toNum(x.r.prix))).filter(Boolean);
+  const pM=cmp.concurrent.map(x=>pos0(toNum(x.r.prix))).filter(Boolean);
+  const stockJours=cmp.stock.map(x=>toNum(x.r.jours)).filter(v=>v!=null&&!isNaN(v));
+  const medV=median(pV), medS=median(pS), medM=median(pM);
+  lastAnalysis={t,cmp,pV,pS,pM,stockJours,medV,medS,medM};
+  renderResults();
+}
+
+function renderResults(){
+  const a=lastAnalysis; if(!a) return;
+  document.getElementById("res-eyebrow").textContent="comparaison prix";
+  const totalCmp=a.cmp.vendus.length+a.cmp.concurrent.length+a.cmp.stock.length+a.cmp.offres.length;
+  if(totalCmp===0){
+    document.getElementById("results-body").innerHTML=`<div class="empty-src" style="padding:34px 20px"><div class="big" style="font-family:var(--display);font-size:18px;color:var(--ink);margin-bottom:8px">Aucun véhicule comparable trouvé</div>Rien de proche de <b>${esc(a.t.marque)} ${esc(a.t.modele)}</b> dans tes données. Charge tes feuilles dans <b>Sources</b>, ou ajoute des lignes dans <b>Données</b>.</div>`;
+    return;
+  }
+  const metaBits=[a.t.gamme||null,a.t.annee||null,a.t.km?fmtKm(toNum(a.t.km)):null,a.t.carburant||null,a.t.version||null].filter(Boolean);
+  const cnt=a.pV.length+a.pS.length+a.pM.length;
+
+  let html=`<div class="verdict-head"><div><div class="veh-title">${esc(a.t.marque)} ${esc(a.t.modele)}</div><div class="veh-meta">${metaBits.map(esc).join("  ·  ")||"&nbsp;"}</div></div><span class="badge neutral"><span class="dot"></span>${cnt} prix comparé${cnt>1?'s':''}</span></div>
+    <div class="kpis">
+      <div class="kpi target"><div class="k-lab">Mes ventes</div><div class="k-val">${fmtE(a.medV)}</div><div class="k-sub">${a.pV.length?(a.pV.length+" vendu"+(a.pV.length>1?"s":"")+" · médiane"):"aucune vente proche"}</div></div>
+      <div class="kpi"><div class="k-lab">Mon stock</div><div class="k-val">${fmtE(a.medS)}</div><div class="k-sub">${a.pS.length?(a.pS.length+" en stock · médiane"):"pas de prix affiché"}</div></div>
+      <div class="kpi"><div class="k-lab">Concurrents</div><div class="k-val">${fmtE(a.medM)}</div><div class="k-sub">${a.pM.length?(a.pM.length+" annonce"+(a.pM.length>1?"s":"")+" · médiane"):"aucune annonce"}</div></div>
+    </div>`;
+
+  // Bande — prix de vente des 3 sources
+  const all=[...a.pV,...a.pS,...a.pM].filter(v=>v!=null&&!isNaN(v));
+  if(all.length){
+    let lo=Math.min(...all),hi=Math.max(...all);const pad=(hi-lo)*0.10||Math.max(hi*0.05,500);lo-=pad;hi+=pad;
+    const pos=v=>hi>lo?((v-lo)/(hi-lo))*100:50;
+    const rng=(arr,cls)=>{if(arr.length<1)return"";const a1=arr.length>=4?quantile(arr,0.25):Math.min(...arr);const a2=arr.length>=4?quantile(arr,0.75):Math.max(...arr);const l=pos(a1),w=Math.max(pos(a2)-l,1.5);return`<div class="rng ${cls}" style="left:${l}%;width:${w}%"></div>`;};
+    const mk=(arr,cls)=>{const m=median(arr);return m!=null?`<div class="marker" style="left:${pos(m)}%"><div class="flag ${cls}">${fmtE(m)}</div><div class="stem"></div></div>`:"";};
+    let b=`<div class="track"></div>`+rng(a.pV,"mine")+rng(a.pS,"stk")+rng(a.pM,"mkt");
+    html+=`<div class="band-wrap"><div class="band-legend">
+      <span><span class="lg-swatch" style="background:rgba(31,86,115,.22);border:1px solid var(--acier)"></span>Mes ventes (25–75%)</span>
+      <span><span class="lg-swatch" style="background:rgba(46,125,79,.16);border:1px solid var(--go)"></span>Mon stock</span>
+      <span><span class="lg-swatch" style="background:rgba(181,118,27,.16);border:1px solid var(--brass)"></span>Concurrents</span>
+    </div><div class="band">${b}<div class="axis"><span>${fmtE(lo)}</span><span>${fmtE(hi)}</span></div></div></div>`;
+  }
+
+  // Stock actuel overlay — prix de vente
+  if(a.cmp.stock.length){
+    const n=a.cmp.stock.length, medJ=median(a.stockJours);
+    const care = n>=3 || (medJ!=null&&medJ>=120);
+    html+=`<div class="stockbox">
+      <div class="sb-h"><span class="sb-t">Déjà en stock</span><span class="sb-alert ${care?'care':'ok'}">${care?'Rotation à surveiller':'Stock maîtrisé'}</span></div>
+      <div class="sb-stats">
+        <span>Véhicules proches : <b>${n}</b></span>
+        <span>Prix de vente médian : <b>${fmtE(a.medS)}</b></span>
+        <span>Ancienneté médiane : <b>${medJ!=null?Math.round(medJ)+" j":"—"}</b></span>
+      </div>
+      <div class="tbl-scroll"><table><thead><tr><th>Type</th><th>Modèle / version</th><th style="text-align:right">Année</th><th style="text-align:right">Km</th><th style="text-align:right">Prix vente</th><th style="text-align:right">Jrs</th><th>Statut</th><th>Site</th></tr></thead><tbody>${
+        a.cmp.stock.slice(0,25).map(({r})=>{const tp=(r.type||"").toUpperCase();return `<tr>
+          <td><span class="pill ${tp==='VN'?'vn':'vo'}">${tp||"VO"}</span></td>
+          <td>${esc(r.modele||"")}${r.version?` <span style="color:var(--slate-2)">${esc(r.version)}</span>`:""}</td>
+          <td class="num">${r.annee?esc(r.annee):"—"}</td>
+          <td class="num">${r.km?fmtKm(toNum(r.km)):"—"}</td>
+          <td class="num" style="font-weight:600">${pos0(toNum(r.prix))?fmtE(toNum(r.prix)):"—"}</td>
+          <td class="num">${r.jours?esc(r.jours):"—"}</td>
+          <td>${r.statut?esc(r.statut):"—"}</td>
+          <td>${r.site?esc(r.site):"—"}</td></tr>`;}).join("")
+      }</tbody></table></div></div>`;
+  }
+
+  html+=`<div class="divider"></div><div class="src-tabs" id="src-tabs"></div><div id="cmp-table"></div>`;
+  document.getElementById("results-body").innerHTML=html;
+  buildSrcTabs(); renderCmpTable(currentSource);
+}
+
+function buildSrcTabs(){
+  const a=lastAnalysis;
+  const counts={vendus:a.cmp.vendus.length,concurrent:a.cmp.concurrent.length,offres:a.cmp.offres.length,stock:a.cmp.stock.length};
+  if(!counts[currentSource]) currentSource=Object.keys(counts).find(k=>counts[k]>0)||"vendus";
+  const labels={vendus:"Vendus",concurrent:"Concurrent",offres:"Offres",stock:"Stock"};
+  document.getElementById("src-tabs").innerHTML=Object.keys(labels).map(k=>`<button class="src-tab ${k===currentSource?'on':''}" onclick="switchSrc('${k}')">${labels[k]} <span class="n">${counts[k]}</span></button>`).join("");
+}
+function switchSrc(k){currentSource=k;buildSrcTabs();renderCmpTable(k);}
+function renderCmpTable(key){
+  const a=lastAnalysis,list=a.cmp[key],box=document.getElementById("cmp-table");
+  if(!list||!list.length){box.innerHTML=`<div class="empty-src">Aucun comparable dans cette source.</div>`;return;}
+  const extraCol=key==="concurrent"?"source":key==="offres"?"fournisseur":key==="stock"?"site":"entite";
+  const rows=list.slice(0,40).map(({r,s})=>{const hi=s>=0.8?"hi":"";const p=pos0(toNum(r.prix));return`<tr>
+    <td><span class="sim ${hi}">${Math.round(s*100)}%</span></td>
+    <td>${esc(r.modele||"")}${r.version?` <span style="color:var(--slate-2)">${esc(r.version)}</span>`:""}</td>
+    <td class="num">${r.annee?esc(r.annee):"—"}</td>
+    <td class="num">${r.km?fmtKm(toNum(r.km)):"—"}</td>
+    <td class="num" style="font-weight:600">${p?fmtE(p):"—"}</td>
+    <td>${r[extraCol]?esc(r[extraCol]):"—"}</td></tr>`;}).join("");
+  box.innerHTML=`<div class="tbl-scroll"><table><thead><tr><th>Prox.</th><th>Modèle / version</th><th style="text-align:right">Année</th><th style="text-align:right">Km</th><th style="text-align:right">Prix</th><th>${esc(FIELD_LABELS[extraCol])}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+/* ---------- Sources (Google Sheets CSV) ---------- */
+let SRC_ERR={};
+function renderSrcCards(){
+  document.getElementById("src-cards").innerHTML=Object.keys(SRC_META).map(k=>{
+    const m=SRC_META[k];const cnt = m.target==="stock" ? DB.stock.filter(r=>(r.type||"").toUpperCase()===(k==="stockVN"?"VN":"VO")).length : DB[m.target].length;
+    const e=SRC_ERR[k];
+    return `<div class="src-card">
+      <div class="sc-top"><span class="sc-name"><span class="dot-src ${e?'err':(SRC[k]?'loaded':'')}" id="dot-${k}"></span>${m.name}</span><span class="sc-count" id="cnt-${k}">${cnt} ligne${cnt>1?'s':''}</span></div>
+      <div class="sc-desc">${m.desc}</div>
+      <input type="url" id="src-${k}" placeholder="Colle le lien de la feuille (edit, partage ou CSV publié)" value="${esc(SRC[k]||"")}">
+      ${e?`<div class="sc-err" id="err-${k}">⚠ ${esc(e)}</div>`:``}
+    </div>`;
+  }).join("");
+}
+function saveSources(){ for(const k of Object.keys(SRC_META)) SRC[k]=val("src-"+k); persist(); toast("URL enregistrées."); }
+function normalizeSheetUrl(url){
+  url=(url||"").trim();
+  if(!url) return url;
+  // Déjà un CSV publié / gviz / export
+  if(/output=csv/i.test(url) || /tqx=out:csv/i.test(url) || /[?&]format=csv/i.test(url)) return url;
+  // Lien /pub sans format -> ajoute output=csv
+  if(/\/pub(\?|$)/i.test(url)) return url + (url.includes("?")?"&":"?") + "output=csv";
+  // Lien edit/partage classique -> conversion en gviz CSV (nécessite partage "tous ceux qui ont le lien")
+  const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if(m){
+    const id=m[1];
+    const g=url.match(/[#&?]gid=(\d+)/);
+    return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`+(g?`&gid=${g[1]}`:``);
+  }
+  return url;
+}
+async function loadAllSources(){
+  saveSources();
+  const st=document.getElementById("src-status"); st.classList.remove("off"); st.textContent="Chargement…";
+  let ok=0,err=0; const newStock=[]; SRC_ERR={};
+  for(const k of Object.keys(SRC_META)){
+    const raw=SRC[k]; const dot=document.getElementById("dot-"+k);
+    if(!raw){ if(dot)dot.className="dot-src"; continue; }
+    try{
+      const txt=await fetchCSV(normalizeSheetUrl(raw));
+      const recs=csvToRecords(txt);
+      if(!recs.length) throw new Error("Aucune ligne exploitable (colonnes marque/modèle introuvables).");
+      if(SRC_META[k].target==="stock"){ recs.forEach(r=>r.type=(k==="stockVN"?"VN":"VO")); newStock.push(...recs); }
+      else DB[SRC_META[k].target]=recs;
+      if(dot)dot.className="dot-src loaded"; ok++;
+    }catch(e){ if(dot)dot.className="dot-src err"; SRC_ERR[k]=(e&&e.message)||"erreur"; err++; }
+  }
+  if(SRC.stockVN||SRC.stockVO) DB.stock=newStock;
+  lastLoad=Date.now(); persist(); refreshDatalists(); renderDataTabs(); renderTable(); renderSrcCards();
+  st.textContent = err? `${ok} chargée(s), ${err} en erreur` : `MàJ ${hhmm()} · ${ok} source(s)`;
+  toast(err?`${err} source(s) en erreur — voir le détail sous chaque feuille.`:"Données chargées.");
+}
+async function fetchCSV(url){
+  let res;
+  try{ res=await fetch(url,{redirect:"follow"}); }
+  catch(e){ throw new Error("Le navigateur n'a pas pu lire cette URL (blocage CORS ou lien gviz instable). Solution : Fichier → Publier sur le web → CSV, puis colle l'URL en 'output=csv'."); }
+  if(res.status===401||res.status===403) throw new Error("Accès non autorisé (403) — la feuille n'est pas partagée publiquement.");
+  if(!res.ok) throw new Error("Erreur "+res.status+" au chargement de la feuille.");
+  const txt=await res.text();
+  if(/<html|<!doctype/i.test(txt.slice(0,200))) throw new Error("Page de connexion reçue au lieu du CSV — la feuille n'est pas publiée/partagée.");
+  return txt;
+}
+function csvToRecords(text){
+  const rows=parseCSV(text); if(rows.length<2) return [];
+  const headers=rows[0].map(matchField);
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const o={}; headers.forEach((f,j)=>{ if(f&&o[f]===undefined) o[f]=(rows[i][j]||"").trim(); });
+    if(o.marque&&o.modele) out.push(o);
+  }
+  return out;
+}
+
+/* ---------- Données (tables manuelles) ---------- */
+function renderDataTabs(){
+  document.getElementById("data-tabs").innerHTML=Object.keys(DATASETS).map(k=>`<button class="${k===currentTable?'on':''}" onclick="switchTable('${k}')">${DATASETS[k].label} <span class="cnt">${DB[k].length}</span></button>`).join("");
+  document.getElementById("data-note").innerHTML=`<b>Tes données.</b> Chargées depuis Google Sheets (onglet Sources) ou saisies/importées ici. Colonnes reconnues automatiquement : marque, modèle, gamme, version, année, km, énergie, prix, prix d'achat, statut, jours stock, site…${storageOK?'':' — <span style="color:var(--stop)">mémoire du navigateur indisponible : utilise la sauvegarde .json.</span>'}`;
+}
+function switchTable(k){currentTable=k;renderDataTabs();renderTable();renderAddRow();}
+function fieldsFor(k){return DATASETS[k].fields;}
+function renderTable(){
+  const k=currentTable,fields=fieldsFor(k);
+  document.getElementById("dt-title").textContent=DATASETS[k].label;
+  document.getElementById("dt-eyebrow").textContent=DATASETS[k].eyebrow;
+  document.querySelector("#data-table thead").innerHTML="<tr>"+fields.map(f=>`<th>${FIELD_LABELS[f]}</th>`).join("")+"<th></th></tr>";
+  const tb=document.querySelector("#data-table tbody");
+  if(!DB[k].length){tb.innerHTML=`<tr><td colspan="${fields.length+1}" class="empty-src">Table vide. Charge une source, importe un CSV, ou ajoute une ligne.</td></tr>`;return;}
+  tb.innerHTML=DB[k].slice(0,400).map((row,i)=>"<tr>"+fields.map(f=>{
+    let v=row[f]??"";
+    if(f==="prix"||f==="prix_achat") return `<td class="num" style="font-weight:600">${pos0(toNum(v))?fmtE(toNum(v)):"—"}</td>`;
+    if(f==="km") return `<td class="num">${v!==""?fmtKm(toNum(v)):"—"}</td>`;
+    if(f==="annee"||f==="jours") return `<td class="num">${esc(v)}</td>`;
+    if(f==="type") return `<td><span class="pill ${(v+'').toUpperCase()==='VN'?'vn':'vo'}">${esc(v)||"—"}</span></td>`;
+    return `<td>${esc(v)}</td>`;
+  }).join("")+`<td style="text-align:right"><button class="del-x" onclick="delRow(${i})">×</button></td></tr>`).join("");
+}
+function renderAddRow(){
+  const k=currentTable,fields=fieldsFor(k);
+  document.getElementById("addrow").innerHTML=fields.map(f=>{
+    if(f==="gamme") return `<select id="add-${f}"><option value="">Gamme</option>${GAMMES.map(g=>`<option>${g}</option>`).join("")}</select>`;
+    if(f==="carburant") return `<select id="add-${f}"><option value="">Énergie</option><option>Diesel</option><option>Essence</option><option>Hybride</option><option>Électrique</option><option>GPL</option></select>`;
+    if(f==="type") return `<select id="add-${f}"><option value="">Type</option><option>VO</option><option>VN</option></select>`;
+    const type=(f==="annee"||f==="km"||f==="prix"||f==="prix_achat"||f==="jours")?"number":"text";
+    return `<input class="${f==="raison"?"full":""}" type="${type}" id="add-${f}" placeholder="${FIELD_LABELS[f]}">`;
+  }).join("")+`<button class="btn-ghost btn-sm full" style="width:100%" onclick="addRow()">Ajouter la ligne</button>`;
+}
+function addRow(){
+  const k=currentTable,fields=fieldsFor(k),row={};
+  fields.forEach(f=>{const el=document.getElementById("add-"+f);row[f]=el?el.value.trim():"";});
+  if(!row.marque||!row.modele){toast("Marque et modèle requis.");return;}
+  DB[k].unshift(row); persist(); renderTable(); renderDataTabs(); refreshDatalists();
+  fields.forEach(f=>{const el=document.getElementById("add-"+f);if(el)el.value="";});
+  toast("Ligne ajoutée.");
+}
+function delRow(i){DB[currentTable].splice(i,1);persist();renderTable();renderDataTabs();refreshDatalists();}
+function clearCurrent(){if(!confirm(`Vider « ${DATASETS[currentTable].label} » ?`))return;DB[currentTable]=[];persist();renderTable();renderDataTabs();toast("Table vidée.");}
+function wipeAll(){if(!confirm("Effacer toutes les tables ?"))return;for(const k of Object.keys(DB))DB[k]=[];persist();renderTable();renderDataTabs();refreshDatalists();toast("Tout effacé.");}
+function resetDemo(){if(!confirm("Recharger les données démo ? Remplace les données actuelles."))return;seedDemo();persist();renderTable();renderDataTabs();refreshDatalists();renderSrcCards();toast("Démo rechargée.");}
+
+/* ---------- CSV / JSON ---------- */
+const ALIASES={
+  marque:["marque","make","brand"],
+  modele:["modele","modèle","model"],
+  gamme:["gamme","segment","categorie","catégorie","famille"],
+  version:["version","finition","trim"],
+  annee:["annee","année","year","millesime","millésime"],
+  km:["km","kms","kilometrage","kilométrage","mileage","compteur"],
+  carburant:["carburant","energie","énergie","fuel"],
+  prix:["prix de vente","prix vente","prix","montant","tarif","prix affiche","prix affiché","price"],
+  prix_achat:["prix d'achat","prix achat","cout achat","cout d'achat","total cessions ht"],
+  jours:["nbr jours stock","jours stock","jrs stock","nbr jours","jours"],
+  statut:["statut","status","disponible a la vente","disponible à la vente"],
+  site:["site proprietaire","site propriétaire","site de stockage","site","agence"],
+  date:["date","date vente","date de vente","date achat","date d'achat","entree en stock","entrée en stock","date mec"],
+  entite:["entite","entité","structure","societe","société","societe proprietaire","société propriétaire"],
+  source:["source","site web","concurrent","plateforme"],
+  fournisseur:["fournisseur","vendeur","supplier","marchand"],
+  raison:["raison","motif","commentaire","note"],
+  type:["type","vn vo","neuf occasion"],
+};
+function matchField(header){
+  const h=norm(header);
+  for(const [f,al] of Object.entries(ALIASES)){ if(al.some(x=>norm(x)===h)) return f; }
+  for(const [f,al] of Object.entries(ALIASES)){ if(al.some(x=>{const n=norm(x);return n.length>3&&h.includes(n);})) return f; }
+  return null;
+}
+function detectDelim(l){const c=(l.match(/,/g)||[]).length,s=(l.match(/;/g)||[]).length,t=(l.match(/\t/g)||[]).length;if(t>=c&&t>=s)return"\t";return s>c?";":",";}
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,"");
+  const d=detectDelim((text.split(/\r?\n/)[0]||""));
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+    else{if(ch==='"')q=true;else if(ch===d){row.push(cur);cur="";}else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur="";}else if(ch==='\r'){}else cur+=ch;}
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  return rows.filter(r=>r.some(c=>c.trim()!==""));
+}
+function triggerImport(){document.getElementById("file-input").click();}
+function handleFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const recs=csvToRecords(ev.target.result);
+      if(!recs.length){toast("CSV vide ou colonnes marque/modèle introuvables.");return;}
+      if(currentTable==="stock") recs.forEach(r=>{if(!r.type)r.type="VO";});
+      DB[currentTable].push(...recs); persist(); renderTable(); renderDataTabs(); refreshDatalists();
+      toast(recs.length+" ligne(s) importée(s).");
+    }catch(err){toast("Erreur de lecture du CSV.");}
+    e.target.value="";
+  };
+  rd.readAsText(file,"UTF-8");
+}
+function exportCSV(){
+  const k=currentTable,fields=fieldsFor(k);if(!DB[k].length){toast("Rien à exporter.");return;}
+  const q=v=>{v=(v??"").toString();return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  dl([fields.join(";"),...DB[k].map(r=>fields.map(f=>q(r[f])).join(";"))].join("\n"),`carexo_${k}.csv`);
+}
+function backupJSON(){ dl(JSON.stringify({DB,SRC,exportedAt:new Date().toISOString()},null,2),"carexo_cockpit_sauvegarde.json"); toast("Sauvegarde téléchargée."); }
+function triggerRestore(){document.getElementById("json-input").click();}
+function handleRestore(e){
+  const file=e.target.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{const p=JSON.parse(ev.target.result);
+      if(p.DB) for(const k of Object.keys(DB)) if(Array.isArray(p.DB[k])) DB[k]=p.DB[k];
+      if(p.SRC) SRC={...SRC,...p.SRC};
+      persist(); renderTable(); renderDataTabs(); refreshDatalists(); renderSrcCards();
+      toast("Sauvegarde restaurée.");
+    }catch(err){toast("Fichier .json invalide.");}
+    e.target.value="";
+  };
+  rd.readAsText(file,"UTF-8");
+}
+function dl(content,name){const blob=new Blob(["\uFEFF"+content],{type:name.endsWith(".json")?"application/json":"text/csv;charset=utf-8;"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+
+/* ---------- Datalists ---------- */
+function refreshDatalists(){
+  const mk=new Set(),md=new Set();
+  Object.values(DB).forEach(l=>l.forEach(r=>{if(r.marque)mk.add(r.marque);if(r.modele)md.add(r.modele);}));
+  document.getElementById("dl-marque").innerHTML=[...mk].sort().map(m=>`<option value="${esc(m)}">`).join("");
+  document.getElementById("dl-modele").innerHTML=[...md].sort().map(m=>`<option value="${esc(m)}">`).join("");
+}
+
+/* ---------- UI ---------- */
+function showView(v){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  document.getElementById("view-"+v).classList.add("on");
+  ["estimer","sources","donnees"].forEach(t=>document.getElementById("tab-"+t).classList.toggle("on",t===v));
+}
+let toastT;
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
+
+/* ---------- Verrouillage ---------- */
+async function sha256(str){
+  if(window.crypto&&crypto.subtle){
+    const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  return null;
+}
+async function tryUnlock(){
+  const v=document.getElementById("lock-input").value;
+  const h=await sha256(v);
+  const okHash = h ? h===LOCK_HASH : (v==="Carexo56500"); // repli si crypto indisponible (file://)
+  if(okHash){ unlocked=true; document.getElementById("lock").style.display="none"; try{sessionStorage.setItem("cx_unlocked","1");}catch(e){} }
+  else { document.getElementById("lock-err").textContent="Mot de passe incorrect."; document.getElementById("lock-input").select(); }
+}
+function checkLock(){
+  try{ if(sessionStorage.getItem("cx_unlocked")==="1"){ unlocked=true; document.getElementById("lock").style.display="none"; return; } }catch(e){}
+  setTimeout(()=>document.getElementById("lock-input").focus(),100);
+}
+
+/* ---------- Démo ---------- */
+function seedDemo(){
+  DB.vendus=[
+    {marque:"Peugeot",modele:"Partner",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100 Premium",annee:"2021",km:"78000",carburant:"Diesel",prix:"13900",date:"2026-02-14",entite:"Vannes Utilitaires"},
+    {marque:"Peugeot",modele:"Partner",gamme:"Utilitaire léger",version:"1.5 BlueHDi 130 Asphalt",annee:"2020",km:"96000",carburant:"Diesel",prix:"12400",date:"2026-03-02",entite:"Vannes Utilitaires"},
+    {marque:"Peugeot",modele:"Partner",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100",annee:"2022",km:"64000",carburant:"Diesel",prix:"15200",date:"2026-04-19",entite:"CAREXO Redon"},
+    {marque:"Citroën",modele:"Berlingo",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100 Club",annee:"2021",km:"88000",carburant:"Diesel",prix:"13100",date:"2026-01-28",entite:"Citroën Moréac"},
+    {marque:"Renault",modele:"Trafic",gamme:"Fourgon",version:"2.0 dCi 120 L1H1",annee:"2021",km:"91000",carburant:"Diesel",prix:"19800",date:"2026-04-02",entite:"Vannes Utilitaires"},
+    {marque:"Renault",modele:"Clio",gamme:"Citadine",version:"1.0 TCe 90 Zen",annee:"2021",km:"46000",carburant:"Essence",prix:"12900",date:"2026-02-22",entite:"CAREXO Redon"},
+  ];
+  DB.concurrent=[
+    {marque:"Peugeot",modele:"Partner",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100 Premium",annee:"2021",km:"81000",carburant:"Diesel",prix:"15490",source:"label-auto",date:"2026-07-01"},
+    {marque:"Peugeot",modele:"Partner",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100",annee:"2021",km:"72000",carburant:"Diesel",prix:"14990",source:"utilitaire-service",date:"2026-07-02"},
+    {marque:"Citroën",modele:"Berlingo",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100 Club",annee:"2021",km:"84000",carburant:"Diesel",prix:"14700",source:"label-auto",date:"2026-07-01"},
+    {marque:"Renault",modele:"Trafic",gamme:"Fourgon",version:"2.0 dCi 120 L1H1",annee:"2021",km:"88000",carburant:"Diesel",prix:"22400",source:"utilitaire-service",date:"2026-07-03"},
+  ];
+  DB.stock=[
+    {type:"VO",marque:"Peugeot",modele:"Partner",gamme:"Fourgon",version:"FG STANDARD 650KG BHDI 100CH PREMIUM",annee:"2020",km:"87095",carburant:"Diesel",prix:"10490",prix_achat:"7825",jours:"298",statut:"Stock disponible",site:"AutoConcept"},
+    {type:"VO",marque:"Renault",modele:"Trafic",gamme:"Fourgon",version:"L1H1 2.0 DCI 120 GRD CONFORT",annee:"2021",km:"112000",carburant:"Diesel",prix:"14490",prix_achat:"9600",jours:"26",statut:"Stock disponible",site:"AutoConcept"},
+    {type:"VO",marque:"Renault",modele:"Clio",gamme:"Citadine",version:"1.0 TCE 100CV BUSINESS",annee:"2022",km:"35500",carburant:"Essence",prix:"0",prix_achat:"10000",jours:"33",statut:"Stock disponible",site:"AutoConcept"},
+    {type:"VN",marque:"Citroën",modele:"Jumpy",gamme:"Fourgon",version:"XL BLUEHDI 2.2 180 EAT8",annee:"",km:"",carburant:"Diesel",prix:"30990",prix_achat:"",jours:"109",statut:"Stock disponible",site:"Vannes Utilitaires"},
+  ];
+  DB.offres=[
+    {marque:"Peugeot",modele:"Partner",gamme:"Utilitaire léger",version:"1.5 BlueHDi 100 Premium",annee:"2021",km:"85000",carburant:"Diesel",prix:"12800",fournisseur:"Interama",raison:"Prix trop haut vs objectif marge"},
+    {marque:"Renault",modele:"Trafic",gamme:"Fourgon",version:"2.0 dCi 145 L2H1",annee:"2021",km:"79000",carburant:"Diesel",prix:"20500",fournisseur:"Atlantique Camion",raison:"Volume déjà couvert"},
+  ];
+}
+
+/* ---------- Init ---------- */
+(function init(){
+  checkLock();
+  loadDB();
+  refreshDatalists();
+  renderSrcCards();
+  renderDataTabs(); renderTable(); renderAddRow();
+  const el=document.getElementById("save-status"); if(el&&storageOK){el.textContent="Mémoire active";el.classList.remove("off");}
+})();
+</script>
+</body>
+</html>
