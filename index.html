@@ -505,16 +505,19 @@ function renderStockTable(){
       <td>${r.site?esc(r.site):"—"}</td></tr>`;}).join("")
   }</tbody></table></div>`;
 }
+function dVal(v){ if(!v) return 0; v=(""+v).trim(); let m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) return +new Date(+m[3],+m[2]-1,+m[1]); m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return +new Date(+m[1],+m[2]-1,+m[3]); return 0; }
 let cmpSort={key:'s',dir:'desc'};
 function sortCmpBy(key){ if(cmpSort.key===key){cmpSort.dir=cmpSort.dir==='asc'?'desc':'asc';} else {cmpSort={key,dir:key==='s'?'desc':'asc'};} renderCmpTable(currentSource); }
 function renderCmpTable(key){
   const a=lastAnalysis,list=a.cmp[key],box=document.getElementById("cmp-table");
   if(!list||!list.length){box.innerHTML=`<div class="empty-src">Aucun comparable dans cette source.</div>`;return;}
   const extraCol=key==="concurrent"?"source":key==="offres"?"fournisseur":key==="stock"?"site":"entite";
+  const showDate=key==="vendus";
   const numKeys={s:1,annee:1,km:1,prix:1};
   const sorted=[...list].sort((x,y)=>{
     let av,bv;
     if(cmpSort.key==='s'){av=x.s;bv=y.s;}
+    else if(cmpSort.key==='date'){av=dVal(x.r.date);bv=dVal(y.r.date);}
     else if(numKeys[cmpSort.key]){av=toNum(x.r[cmpSort.key]);bv=toNum(y.r[cmpSort.key]);}
     else {av=(x.r[cmpSort.key]||"").toString().toLowerCase();bv=(y.r[cmpSort.key]||"").toString().toLowerCase();}
     if(av===null||av===undefined||av==="")return 1; if(bv===null||bv===undefined||bv==="")return -1;
@@ -524,15 +527,16 @@ function renderCmpTable(key){
   const rows=sorted.slice(0,60).map(({r,s})=>{const hi=s>=0.8?"hi":"";const p=pos0(toNum(r.prix));
     const url=findUrl(r); const extraVal=r[extraCol]||"";
     const extraCell = url ? `<a href="${esc(url)}" target="_blank" rel="noopener" class="ext-link">${esc(extraVal||"Voir l'annonce")} ↗</a>` : (extraVal?esc(extraVal):"—");
+    const dateCell = showDate ? `<td class="num">${r.date?esc(r.date):"—"}</td>` : "";
     return`<tr>
     <td><span class="sim ${hi}">${Math.round(s*100)}%</span></td>
     <td>${esc(r.modele||"")}${r.version?` <span style="color:var(--slate-2)">${esc(r.version)}</span>`:""}</td>
     <td class="num">${r.annee?esc(r.annee):"—"}</td>
     <td class="num">${r.km?fmtKm(toNum(r.km)):"—"}</td>
     <td class="num" style="font-weight:600">${p?fmtE(p):"—"}</td>
-    <td>${extraCell}</td></tr>`;}).join("");
+    ${dateCell}<td>${extraCell}</td></tr>`;}).join("");
   const th=(lab,k,al)=>{const act=cmpSort.key===k;const ar=act?(cmpSort.dir==='asc'?' ▲':' ▼'):'';return `<th class="th-sort${act?' on':''}" style="cursor:pointer;${al?'text-align:'+al:''}" onclick="sortCmpBy('${k}')">${esc(lab)}${ar}</th>`;};
-  box.innerHTML=`<div class="tbl-scroll"><table><thead><tr>${th('Prox.','s')}${th('Modèle / version','modele')}${th('Année','annee','right')}${th('Km','km','right')}${th('Prix','prix','right')}${th(FIELD_LABELS[extraCol],extraCol)}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  box.innerHTML=`<div class="tbl-scroll"><table><thead><tr>${th('Prox.','s')}${th('Modèle / version','modele')}${th('Année','annee','right')}${th('Km','km','right')}${th('Prix','prix','right')}${showDate?th('Date','date','right'):""}${th(FIELD_LABELS[extraCol],extraCol)}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 /* ---------- Sources (Google Sheets CSV) ---------- */
